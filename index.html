@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>努力向上的小牛 · 泰语打字练习</title>
+<link rel="icon" href="img/favicon.ico" sizes="16x16 32x32 48x48">
+<link rel="icon" type="image/png" href="img/favicon-64.png">
+<link rel="apple-touch-icon" href="img/favicon-192.png">
+<link rel="stylesheet" href="css/style.css?v=3">
+</head>
+<body class="font-looped">
+
+<header class="topbar">
+  <div class="brand"><img src="img/logo.png" class="logo" alt="logo"> 努力向上的小牛</div>
+  <div class="top-actions">
+    <select id="selLibQuick" class="lib-quick" title="切换词库"></select>
+    <button class="btn small ghost" data-open-lib title="上传 / 管理 / 删除词库">📚 词库</button>
+    <button class="btn small ghost" id="btnFont" title="切换泰文字体：经典（传统带圈）/ 现代（无圈）">经典</button>
+    <button class="btn small ghost" id="btnSettings" title="练习设置">⚙ 设置</button>
+  </div>
+</header>
+
+<main>
+  <!-- ============ 练习区（打开即用） ============ -->
+  <section id="practiceArea">
+    <div class="card word-card">
+      <div class="thai-line" id="thaiLine" lang="th"></div>
+      <div class="trans-line en" id="enLine" lang="en"></div>
+      <div class="trans-line zh" id="zhLine"></div>
+      <div class="input-display" id="inputDisplay" lang="th"></div>
+
+      <!-- 统计行（居中） -->
+      <div class="stats" id="statsBar">
+        <div class="stat"><span class="stat-label">平均速度</span><span class="stat-value" id="statSpeed">0.0 词/分</span></div>
+        <div class="stat"><span class="stat-label">错误字符</span><span class="stat-value" id="statErr">0</span></div>
+        <div class="stat"><span class="stat-label">正确率</span><span class="stat-value" id="statAcc">100%</span></div>
+        <div class="stat"><span class="stat-label">已练时间</span><span class="stat-value" id="statTime">00:00</span></div>
+        <div class="stat"><span class="stat-label">剩余时间</span><span class="stat-value" id="statRemain">不限</span></div>
+        <div class="stat"><span class="stat-label">进度</span><span class="stat-value" id="statProg">--</span></div>
+      </div>
+
+      <div class="word-toolbar">
+        <button class="btn small" id="btnSpeak" title="播放当前词发音">🔊 发音</button>
+        <button class="btn small" id="btnToggleEn" title="显示/隐藏英文释义">EN</button>
+        <button class="btn small" id="btnToggleZh" title="显示/隐藏中文释义">中</button>
+        <button class="btn small" id="btnSkip" title="跳过当前词">⏭ 跳过</button>
+        <button class="btn small" id="btnPause">⏸ 暂停</button>
+        <button class="btn small danger" id="btnStop" title="结束并查看成绩">⏹ 结束</button>
+        <span class="next-preview" id="nextPreview"></span>
+      </div>
+      <p class="hint center" id="ttsHint" hidden></p>
+    </div>
+
+    <div class="card kb-card">
+      <div class="kb-head">
+        <span id="kbLayoutName"></span>
+        <span class="kb-tip">深色反显键 = 待输入字符 · 闪烁 = 实际按键（键盘可点击输入，点 Shift 切上档字符）</span>
+      </div>
+      <div class="keyboard" id="keyboard"></div>
+    </div>
+  </section>
+</main>
+
+<footer>努力向上的小牛 · Kedmanee 键位映射（无需安装泰语键盘）· 数据保存在本浏览器（localStorage）</footer>
+
+<!-- ============ 设置弹窗 ============ -->
+<div class="modal" id="modalSettings" hidden>
+  <div class="modal-box narrow">
+    <div class="modal-head"><h3>⚙ 练习设置</h3><button class="btn small ghost" id="btnSetClose">✕</button></div>
+    <div class="set-body">
+      <div class="field">
+        <span>练习时长</span>
+        <div class="seg" role="group">
+          <button class="dur-btn" data-min="1">1 分钟</button>
+          <button class="dur-btn" data-min="2">2 分钟</button>
+          <button class="dur-btn" data-min="3">3 分钟</button>
+          <button class="dur-btn" data-min="5">5 分钟</button>
+          <button class="dur-btn" data-min="10">10 分钟</button>
+          <button class="dur-btn active" data-min="0">不限</button>
+        </div>
+      </div>
+      <label class="field">
+        <span>发音时机</span>
+        <select id="selAudio">
+          <option value="before">输入前自动朗读</option>
+          <option value="after">输入完成后朗读</option>
+          <option value="off">关闭自动朗读</option>
+        </select>
+      </label>
+      <label class="field">
+        <span>发音引擎</span>
+        <select id="selTts">
+          <option value="auto">自动（优先在线语音）</option>
+          <option value="google">在线语音（Google，需联网）</option>
+          <option value="system">系统语音（需安装泰语语音包）</option>
+        </select>
+      </label>
+      <div class="field">
+        <span>释义显示</span>
+        <div class="checks">
+          <label class="check"><input type="checkbox" id="chkEn" checked> 英文释义</label>
+          <label class="check"><input type="checkbox" id="chkZh" checked> 中文释义</label>
+          <label class="check"><input type="checkbox" id="chkShuffle" checked> 随机词序</label>
+        </div>
+      </div>
+      <p class="hint">更改时长或随机词序会重新开始统计。</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 词库管理弹窗 ============ -->
+<div class="modal" id="modalLib" hidden>
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3>📚 词库管理</h3>
+      <button class="btn small ghost" id="btnLibClose">✕ 关闭</button>
+    </div>
+    <div class="lib-list" id="libList"></div>
+    <div class="lib-add">
+      <h4>新建自建词库（上限 1000 词）</h4>
+      <div class="field-row">
+        <input type="text" id="libName" placeholder="词库名称（可留空自动命名）">
+        <input type="file" id="libFile" accept=".txt,.csv,.json" style="max-width:220px">
+      </div>
+      <textarea id="libPaste" rows="5" placeholder="粘贴词条，每行一条，格式（制表符/逗号/分号分隔）：&#10;สวัสดี,hello,你好&#10;ขอบคุณ	thank you	谢谢&#10;只有泰语一列也可以，导入后会联网自动补全释义"></textarea>
+      <div class="field-row">
+        <button class="btn primary" id="btnLibParse">📋 解析并核对</button>
+        <span class="hint" id="libMsg"></span>
+      </div>
+      <div class="review" id="libReview" hidden>
+        <div class="review-head">
+          <span id="reviewSummary"></span>
+          <span class="review-btns">
+            <button class="btn small" id="btnAutoFill">🌐 补全缺失释义</button>
+            <button class="btn small" id="btnVerify">🔍 校对全部释义</button>
+            <button class="btn small primary" id="btnSaveLib">💾 保存词库</button>
+          </span>
+        </div>
+        <div class="review-progress" id="reviewProgress" hidden></div>
+        <div class="review-table" id="reviewTable"></div>
+        <p class="hint">释义可直接编辑；⚠ 表示与机翻差异较大（非必然错误，泰语一词多义很常见），点击「采用」可换成机翻结果。补全/校对需要联网。</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 成绩弹窗 ============ -->
+<div class="modal" id="modalResult" hidden>
+  <div class="modal-box narrow">
+    <div class="modal-head"><h3>🏁 练习成绩</h3></div>
+    <div class="res-grid" id="resGrid"></div>
+    <div class="modal-actions">
+      <button class="btn primary" id="btnBack">↩ 返回练习</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 暂停遮罩 ============ -->
+<div class="modal overlay-center" id="pauseOverlay" hidden>
+  <div class="pause-box">
+    <div class="pause-title">⏸ 已暂停</div>
+    <button class="btn primary big" id="btnResume">▶ 点击继续（或按 Esc）</button>
+  </div>
+</div>
+
+<div id="toast" hidden></div>
+
+<script src="js/layouts.js?v=2"></script>
+<script src="js/audio.js?v=2"></script>
+<script src="js/translate.js?v=2"></script>
+<script src="js/storage.js?v=2"></script>
+<script src="js/data/words-1.js?v=2"></script>
+<script src="js/data/words-2.js?v=2"></script>
+<script src="js/data/words-3.js?v=2"></script>
+<script src="js/data/words-4.js?v=2"></script>
+<script src="js/data/words-5.js?v=2"></script>
+<script src="js/data/phrasebook.js?v=2"></script>
+<script src="js/app.js?v=4"></script>
+</body>
+</html>
